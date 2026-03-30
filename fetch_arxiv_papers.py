@@ -71,14 +71,48 @@ def load_papers_from_cache():
         return None
 
 
-def fetch_all_recent_papers(days=14, max_per_cat=250, ignore_cache=False):
+def fetch_all_recent_papers(
+    days=14,
+    max_per_cat=250,
+    ignore_cache=False,
+    days_back_start=None,
+    days_back_end=None,
+):
     """
-    Fetches all papers from the last 14 days across all categories
+    Fetches papers from a specific date range across all categories
     and deduplicates them into a global dictionary.
+
+    Args:
+        days: Number of days to look back (used if days_back_start/end not provided)
+        max_per_cat: Maximum papers per category
+        ignore_cache: Whether to ignore cache
+        days_back_start: Start of date range (days back from today, e.g., 14 = 14 days ago)
+        days_back_end: End of date range (days back from today, e.g., 7 = 7 days ago)
+                      If provided, only papers between start and end are fetched
     """
-    print(
-        f"1. FETCHING PAPERS from {(datetime.now(timezone.utc) - timedelta(days=days)).date()} to {datetime.now(timezone.utc).date()} - last {days} days"
-    )
+    now = datetime.now(timezone.utc)
+
+    # Determine date range
+    if days_back_start is not None and days_back_end is not None:
+        # Fetch papers from the week prior (e.g., 14 days ago to 7 days ago)
+        # days_back_start=14 means 14 days ago (older), days_back_end=7 means 7 days ago (newer)
+        cutoff_date_old = now - timedelta(
+            days=days_back_start
+        )  # Papers older than this are excluded (14 days ago)
+        cutoff_date_new = now - timedelta(
+            days=days_back_end
+        )  # Papers newer than this are excluded (7 days ago)
+        print(
+            f"1. FETCHING PAPERS from {cutoff_date_old.date()} to {cutoff_date_new.date()} (week prior: days {days_back_start}-{days_back_end} back)"
+        )
+    else:
+        # Legacy behavior: fetch last N days
+        start_date = now - timedelta(days=days)
+        print(
+            f"1. FETCHING PAPERS from {start_date.date()} to {now.date()} - last {days} days"
+        )
+        cutoff_date_old = start_date
+        cutoff_date_new = None
 
     if is_cache_valid() and not ignore_cache:
         print("Paper metadata cache found, loading from file!")
@@ -88,10 +122,13 @@ def fetch_all_recent_papers(days=14, max_per_cat=250, ignore_cache=False):
         print("Cache loading failed, proceeding with API calls!")
 
     # No valid cache, proceed with normal fetching
-    cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
-
     global_papers = {}
-    client = arxiv.Client()
+    # client = arxiv.Client()
+    client = arxiv.Client(
+        page_size=2000,
+        delay_seconds=10.0,
+        num_retries=5,
+    )
 
     for cat_code in FILTER_CATEGORIES.keys():
         print(f"Fetching {cat_code}...")
@@ -103,16 +140,31 @@ def fetch_all_recent_papers(days=14, max_per_cat=250, ignore_cache=False):
         )
 
         try:
+            papers_in_range = 0
+            papers_too_old = 0
             for paper in client.results(search):
-                # Stop processing this category if we hit papers older than 14 days
-                if paper.published < cutoff_date:
-                    break
+                # Skip papers that are too recent (if date range specified)
+                if cutoff_date_new is not None and paper.published > cutoff_date_new:
+                    continue
+
+                # Stop processing if paper is older than cutoff
+                if paper.published < cutoff_date_old:
+                    papers_too_old += 1
+                    # Continue a bit more to ensure we don't miss papers due to sorting issues
+                    if (
+                        papers_too_old > 100
+                    ):  # Allow 100 papers past cutoff before truly stopping
+                        break
+                    continue
 
                 clean_id = paper.get_short_id().split("v")[0]
 
                 # Deduplication Logic
                 if clean_id not in global_papers:
                     global_papers[clean_id] = paper
+                    papers_in_range += 1
+
+            print(f"  {cat_code}: {papers_in_range} papers in date range")
         except Exception as e:
             print(f"Error fetching {cat_code}: {e}")
     print(f"\nTotal unique papers fetched: {len(global_papers)}")
