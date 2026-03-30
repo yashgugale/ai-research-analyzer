@@ -84,8 +84,8 @@ Selects the top 7 papers from the ranked list for analysis and publication.
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
-   cd 02-ai-researcher
+   git clone https://github.com/yashgugale/ai-research-analyzer.git
+   cd ai-research-analyzer
    ```
 
 2. **Create a virtual environment**
