@@ -37,7 +37,7 @@ def main():
     # 2. Score and Rank them globally
     ranked_papers = score_and_rank_papers(global_papers, ignore_cache=False)
     # 3. Select top 14 papers from global ranking and summarize
-    top_papers = filter_papers(ranked_papers, 14)
+    top_papers = filter_papers(ranked_papers, 7)
 
     # 4. Run analysis on top papers
     analyze_papers(top_papers, force_regenerate=False)
@@ -48,10 +48,9 @@ def main():
     proofread_all_papers(
         papers_date_folder, provider_type=MODEL_PROVIDER, **provider_config
     )
-    return
+
     # 6. Publish to Substack
     papers_date_folder = os.path.join(OUTPUT_DIR, date.today().strftime("%Y-%m-%d"))
-    # papers_date_folder = os.path.join(OUTPUT_DIR, "2026-03-26")
 
     # Calculate next day at 10am EST
     now_est = datetime.now(timezone.utc).astimezone()

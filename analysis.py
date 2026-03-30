@@ -25,14 +25,42 @@ def download_paper(paper, raw_category_code):
     pdf_path = os.path.join(folder_path, f"{clean_id}.pdf")
     if not os.path.exists(pdf_path):
         if pdf_url:
-            try:
-                response = requests.get(pdf_url, timeout=30)
-                response.raise_for_status()
-                with open(pdf_path, "wb") as f:
-                    f.write(response.content)
-                # print(f"Downloaded PDF to: {pdf_path}")
-            except Exception as e:
-                print(f"Failed to download PDF: {e}")
+            max_retries = 3
+            for attempt in range(max_retries):
+                try:
+                    response = requests.get(pdf_url, timeout=60, stream=True)
+                    response.raise_for_status()
+
+                    # Write in chunks to handle large files
+                    total_size = int(response.headers.get("content-length", 0))
+                    downloaded_size = 0
+
+                    with open(pdf_path, "wb") as f:
+                        for chunk in response.iter_content(chunk_size=8192):
+                            if chunk:
+                                f.write(chunk)
+                                downloaded_size += len(chunk)
+
+                    # Verify download completed
+                    if total_size > 0 and os.path.getsize(pdf_path) < total_size * 0.9:
+                        print(
+                            f"Incomplete download (attempt {attempt + 1}/{max_retries}), retrying..."
+                        )
+                        os.remove(pdf_path)
+                        time.sleep(2)
+                        continue
+
+                    break  # Success
+                except Exception as e:
+                    print(
+                        f"Failed to download PDF (attempt {attempt + 1}/{max_retries}): {e}"
+                    )
+                    if os.path.exists(pdf_path):
+                        os.remove(pdf_path)
+                    if attempt < max_retries - 1:
+                        time.sleep(2)
+                    else:
+                        print(f"Failed to download PDF after {max_retries} attempts")
         else:
             print("No PDF URL available")
     else:
