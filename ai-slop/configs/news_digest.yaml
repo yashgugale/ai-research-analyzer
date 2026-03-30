@@ -1,0 +1,36 @@
+pipeline:
+  name: "Tech News Digest"
+  description: "Daily tech news aggregation from multiple sources"
+
+sources:
+  - type: "rss_source"
+    config:
+      feeds:
+        - "https://news.ycombinator.com/rss"
+        - "https://techcrunch.com/feed/"
+      max_items: 50
+      cache_dir: "cache"
+
+processors:
+  - type: "filter"
+    config:
+      top_n: 10
+      min_score: 0.0
+
+generators:
+  - type: "markdown_generator"
+    config:
+      template: "news_article"
+      template_path: "templates/news_article.yaml"
+      model_provider: "ollama"
+      model_config:
+        model_name: "mistral"
+      output_dir: "news_output"
+      max_retries: 3
+
+publishers:
+  - type: "file_publisher"
+    config:
+      output_dir: "output"
+      formats:
+        - "md"

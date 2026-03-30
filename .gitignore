@@ -8,3 +8,4 @@ cache/
 *.html
 *.json
 *.pdf
+.env

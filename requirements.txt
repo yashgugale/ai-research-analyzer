@@ -1,0 +1,9 @@
+arxiv==2.4.1
+charset-normalizer==3.4.6
+feedparser==6.0.12
+ollama==0.6.1
+pip-chill==1.0.5
+pydantic_core==2.41.5
+pypdf==6.9.2
+python-slugify==8.0.4
+python-substack==0.1.21
