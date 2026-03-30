@@ -22,6 +22,12 @@ This tool is designed for researchers, AI enthusiasts, and newsletter subscriber
 **Note**: The paper summary is created using an LLM system. It is possible that there are some inaccuracies in the summary or formatting issues. Please refer to the original paper for the most accurate information.
 Experiment with different models to improve the quality of the summaries.
 
+### Improvements
+
+- The ranking algorithm can be improved to accommodate for affiliations and institutions to better identify impactful research
+- The LLM currently ignores images and tables in the papers and runs on text only data. This can be improved by using a multimodal LLM.
+- Potential improvements to the prompt system to improve the quality of the summaries
+- Use better filtering criteria to identify impactful papers
 ---
 
 ## 2. How It Works
@@ -84,13 +90,13 @@ Selects the top 7 papers from the ranked list for analysis and publication.
 
 2. **Create a virtual environment**
    ```bash
-   python3 -m venv .venv
+   uv venv
    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
    ```
 
 3. **Install dependencies**
    ```bash
-   pip install -r requirements.txt
+   uv pip install -r requirements.txt
    ```
 
 4. **Set up environment variables**
