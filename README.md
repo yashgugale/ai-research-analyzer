@@ -17,7 +17,7 @@ This tool is designed for researchers, AI enthusiasts, and newsletter subscriber
 
 ### Substack publication
 
-![AI Daily Bytes](https://aidailybytes.substack.com)
+[AI Daily Bytes](https://aidailybytes.substack.com)
 
 **Note**: The paper summary is created using an LLM system. It is possible that there are some inaccuracies in the summary or formatting issues. Please refer to the original paper for the most accurate information.
 Experiment with different models to improve the quality of the summaries.
